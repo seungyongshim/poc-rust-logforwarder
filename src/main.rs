@@ -1,13 +1,7 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{App, get, HttpResponse, HttpServer, post, Responder, web};
 use actix::prelude::*;
 
-struct MyActor {
-    pub count: usize,
-}
-
-impl Actor for MyActor {
-    type Context = Context<Self>;
-}
+mod MyActor;
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -23,8 +17,14 @@ async fn manual_hello() -> impl Responder {
     HttpResponse::Ok().body("Hey there!")
 }
 
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    actix_rt::spawn(async {
+        let addr = MyActor::MyActor::new().start();
+        addr.send(MyActor::Ping(10)).await.unwrap();
+    });
+
     HttpServer::new(|| {
         App::new()
             .service(hello)
